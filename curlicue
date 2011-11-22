@@ -43,23 +43,27 @@ parse_cred() {
 url_encode() {
     string="$1"
     while [ "$string" ]; do
-        case "$string" in
+case "$string" in
             [A-Za-z0-9._~-]*) printf '%c' "$string";;
             *) printf '%%%X' "'$string";;
         esac
-        string="${string#?}"
+string="${string#?}"
     done
-    echo
+echo
 }
 
 #special for utf-8 Chinese
 chinese_status()
 {
     line="$*"
-    olds=`echo $line | grep -oP "(?<=status%3D).*$"`
-    news=`echo $olds |sed -e "s#%#%25#g" -e "s#%2526#%2520#g" -e "s#%252520#%2520#g" -e "s#%25252B#%2520#ig" 2>/dev/null`
-    result=`echo $line | sed -e "s#$olds#$news#" 2>/dev/null`
-    echo $result
+    if [ `echo "$line" |grep -Po '\-d.*status'` ];then
+	olds=`echo $line | grep -oP "(?<=status%3D).*$"`
+	news=`echo $olds |sed -e "s#%#%25#g" -e "s#%2526#%2520#g" -e "s#%252520#%2520#g" -e "s#%25252B#%2520#ig" 2>/dev/null`
+	result=`echo $line | sed -e "s#$olds#$news#" 2>/dev/null`
+	echo "$result"
+    else
+	echo "$line"
+    fi
 }
 
 quote_vals() {
@@ -90,7 +94,7 @@ mk_params() {
         $(foreach_query_pair echo_pair "$extra_params") \
         $(foreach_query_pair echo_pair "$1")
     do
-        echo "$i"
+echo "$i"
     done | sort
 }
 
@@ -108,7 +112,7 @@ oauth_timestamp="$(date +%s)"
 oauth_nonce="$(openssl rand -base64 12)"
 
 while getopts 'e:f:p:vu:' OPTION; do
-    case $OPTION in
+case $OPTION in
         e) eval "echo \"$OPTARG\""; exit 0;;
         f) load_cred_file "$OPTARG"; loaded=1;;
         p) extra_params="$OPTARG";;
@@ -123,33 +127,32 @@ shift $(($OPTIND-1))
 # attempt to parse them here. Only one URL is supported.
 
 for i; do
-    case "$prev" in
-        -d|--data|-F) url_params="$i";;
+case "$prev" in
+        -d|--data) url_params="$i";;
         -X) method="$i";;
     esac
-    case "$i" in
+case "$i" in
         -d|--data|-F) method=POST;;
         http*\?*) url="${i%%\?*}"; url_params="${i#*\?}";;
         http*) url="$i";;
     esac
-    prev="$i"
+prev="$i"
 done
 
 if [ -z "$loaded" ]; then
-    cropped_url="${url#*://}"
+cropped_url="${url#*://}"
     host="${cropped_url%%/*}"
     load_cred_file "$HOME/.curlicue/$host"
 fi
 
 if [ -z "$oauth_consumer_key" ]; then
-    echo "Couldn't load a consumer key! Exiting." 1>&2
+echo "Couldn't load a consumer key! Exiting." 1>&2
     exit 1
 fi
 
 # This is where the magic happens.
-
-#special for Spaces inside of status
 url_params=`echo "$url_params" |sed -e "s# #%20#g" -e"s#\+#%2b#g"`
+
 params="$(mk_params "$url_params" | join_params '&')"
 base_string="$method&$(url_encode "$url")&$(url_encode "$params")"
 base_string=`chinese_status $base_string`
@@ -159,8 +162,9 @@ sig_params="oauth_signature=$(url_encode "$oauth_signature")"
 auth_header="$(mk_params "$sig_params" | quote_vals | join_params ', ')"
 
 if [ "$verbose" ]; then
-    echo "Base string: $base_string" 1>&2
+echo "Base string: $base_string" 1>&2
     echo "Authorization: OAuth $auth_header" 1>&2
 fi
 
-curl -s -H "Authorization: OAuth $auth_header" "$@"
+curl -H "Authorization: OAuth $auth_header" "$@"
+
