@@ -23,15 +23,6 @@ output_file="$base/$name.token"
 echo "oauth_consumer_key=$(curlicue -u "$key")&oauth_consumer_secret=$(
     curlicue -u "$secret")" > $consumer_tmp
 
-#curlicue -f $consumer_tmp -p 'oauth_callback=oob' -- \
-#    -s -d '' "$request_token_url" > $request_token_tmp
-
-#echo "Load this URL: $(curlicue -f $consumer_tmp -f $request_token_tmp -e "$authorize_url")"
-#read -p 'Paste the PIN you got here: ' pin
-
-#curlicue -f $consumer_tmp -f $request_token_tmp \
-#    ${pin:+-p "oauth_verifier=$pin"} -- \
-#    -s -d '' "$access_token_url" > $access_token_tmp
 curlicue -f $consumer_tmp -p "x_auth_username=$name&x_auth_password=$password&x_auth_mode=client_auth" $access_token_url > $access_token_tmp
 paste -d '&' $consumer_tmp $access_token_tmp > "$output_file"
 echo
