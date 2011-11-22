@@ -114,11 +114,11 @@ shift $(($OPTIND-1))
 
 for i; do
     case "$prev" in
-        -d|--data) url_params="$i";;
+        -d|--data|-F) url_params="$i";;
         -X) method="$i";;
     esac
     case "$i" in
-        -d|--data) method=POST;;
+        -d|--data|-F) method=POST;;
         http*\?*) url="${i%%\?*}"; url_params="${i#*\?}";;
         http*) url="$i";;
     esac
@@ -150,4 +150,4 @@ if [ "$verbose" ]; then
     echo "Authorization: OAuth $auth_header" 1>&2
 fi
 
-curl -H "Authorization: OAuth $auth_header" "$@"
+curl -s -H "Authorization: OAuth $auth_header" "$@"

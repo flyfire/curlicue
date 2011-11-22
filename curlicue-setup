@@ -2,15 +2,20 @@
 
 umask 077
 
-if [ $# = 4 ]; then
-    request_token_url="$1"
-    authorize_url="$2"
-    access_token_url="$3"
-    output_file="$4"
+#if [ $# = 4 ]; then
+if [ $# = 1 ]; then
+#    request_token_url="$1"
+#    authorize_url="$2"
+#    access_token_url="$3"
+#    output_file="$4"
+    output_file="$1"
 else
-    echo "usage: $0 REQ_TOKEN_URL AUTHORIZE_URL ACCESS_TOKEN_URL OUTPUT_FILE"
+#    echo "usage: $0 REQ_TOKEN_URL AUTHORIZE_URL ACCESS_TOKEN_URL OUTPUT_FILE"
+    echo "Usage: $0 OUTPUT_FILE"
     exit 2
 fi
+
+access_token_url='http://fanfou.com/oauth/access_token'
 
 consumer_tmp=$(mktemp -t curlicue_consumer.XXXXXX)
 request_token_tmp=$(mktemp -t curlicue_request_token.XXXXXX)
@@ -18,18 +23,25 @@ access_token_tmp=$(mktemp -t curlicue_access_token.XXXXXX)
 
 read -p 'Consumer key: ' key
 read -p 'Consumer secret: ' secret
+
+read -p "Fanfou loginname(ID/Mobile Number/Email): " name
+stty -echo
+read -p "Fanfou Password: " password ; echo
+stty echo
+
 echo "oauth_consumer_key=$(curlicue -u "$key")&oauth_consumer_secret=$(
     curlicue -u "$secret")" > $consumer_tmp
 
-curlicue -f $consumer_tmp -p 'oauth_callback=oob' -- \
-    -s -d '' "$request_token_url" > $request_token_tmp
+#curlicue -f $consumer_tmp -p 'oauth_callback=oob' -- \
+#    -s -d '' "$request_token_url" > $request_token_tmp
 
-echo "Load this URL: $(curlicue -f $consumer_tmp -f $request_token_tmp -e "$authorize_url")"
-read -p 'Paste the PIN you got here: ' pin
+#echo "Load this URL: $(curlicue -f $consumer_tmp -f $request_token_tmp -e "$authorize_url")"
+#read -p 'Paste the PIN you got here: ' pin
 
-curlicue -f $consumer_tmp -f $request_token_tmp \
-    ${pin:+-p "oauth_verifier=$pin"} -- \
-    -s -d '' "$access_token_url" > $access_token_tmp
-
+#curlicue -f $consumer_tmp -f $request_token_tmp \
+#    ${pin:+-p "oauth_verifier=$pin"} -- \
+#    -s -d '' "$access_token_url" > $access_token_tmp
+curlicue -f $consumer_tmp -p "x_auth_username=$name&x_auth_password=$password&x_auth_mode=client_auth" $access_token_url > $access_token_tmp
 paste -d '&' $consumer_tmp $access_token_tmp > "$output_file"
+echo
 echo "OK! Now you can run: curlicue -f $output_file [-- CURL_OPTS] URL"
