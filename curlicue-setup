@@ -2,18 +2,8 @@
 
 umask 077
 
-#if [ $# = 4 ]; then
-if [ $# = 1 ]; then
-#    request_token_url="$1"
-#    authorize_url="$2"
-#    access_token_url="$3"
-#    output_file="$4"
-    output_file="$1"
-else
-#    echo "usage: $0 REQ_TOKEN_URL AUTHORIZE_URL ACCESS_TOKEN_URL OUTPUT_FILE"
-    echo "Usage: $0 OUTPUT_FILE"
-    exit 2
-fi
+base="$HOME/.fftoken"
+mkdir -p $base
 
 access_token_url='http://fanfou.com/oauth/access_token'
 
@@ -29,6 +19,7 @@ stty -echo
 read -p "Fanfou Password: " password ; echo
 stty echo
 
+output_file="$base/$name.token"
 echo "oauth_consumer_key=$(curlicue -u "$key")&oauth_consumer_secret=$(
     curlicue -u "$secret")" > $consumer_tmp
 

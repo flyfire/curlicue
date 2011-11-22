@@ -52,6 +52,16 @@ url_encode() {
     echo
 }
 
+#special for utf-8 Chinese
+chinese_status()
+{
+    line="$*"
+    olds=`echo $line | grep -oP "(?<=status%3D).*$"`
+    news=`echo $olds |sed -e "s#%#%25#g" -e "s#%2526#%2520#g" -e "s#%252520#%2520#g" -e "s#%25252B#%2520#ig" 2>/dev/null`
+    result=`echo $line | sed -e "s#$olds#$news#" 2>/dev/null`
+    echo $result
+}
+
 quote_vals() {
     sed 's/=\(.*\)/="\1"/'
 }
@@ -138,8 +148,11 @@ fi
 
 # This is where the magic happens.
 
+#special for Spaces inside of status
+url_params=`echo "$url_params" |sed -e "s# #%20#g" -e"s#\+#%2b#g"`
 params="$(mk_params "$url_params" | join_params '&')"
 base_string="$method&$(url_encode "$url")&$(url_encode "$params")"
+base_string=`chinese_status $base_string`
 signing_key="$oauth_consumer_secret&$oauth_token_secret"
 oauth_signature="$(hmac_sha1 "$signing_key" "$base_string")"
 sig_params="oauth_signature=$(url_encode "$oauth_signature")"
