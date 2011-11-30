@@ -166,5 +166,5 @@ echo "Base string: $base_string" 1>&2
     echo "Authorization: OAuth $auth_header" 1>&2
 fi
 
-curl -H "Authorization: OAuth $auth_header" "$@"
+curl -s -H "Authorization: OAuth $auth_header" "$@"
 
