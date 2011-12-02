@@ -56,12 +56,14 @@ echo
 chinese_status()
 {
     line="$*"
-    if [ `echo "$line" |grep -Po '\-d.*status'` ];then
+    if [ `echo "$line" |grep -Po '%26status%3D'` ];then
+
 	olds=`echo $line | grep -oP "(?<=status%3D).*$"`
-	news=`echo $olds |sed -e "s#%#%25#g" -e "s#%2526#%2520#g" -e "s#%252520#%2520#g" -e "s#%25252B#%2520#ig" 2>/dev/null`
+	news=`echo $olds |sed -e "s#%40#%2540#g" `
 	result=`echo $line | sed -e "s#$olds#$news#" 2>/dev/null`
 	echo "$result"
     else
+	echo 'no ch'
 	echo "$line"
     fi
 }
